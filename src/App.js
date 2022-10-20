@@ -1,24 +1,29 @@
-import logo from './logo.svg';
-import './App.css';
+import Botones from "./Componentes/Botones";
+import Descripcion from "./Componentes/Descripcion";
+import TablaTarea from "./Componentes/TablaTarea";
+import Tarea from "./Componentes/Tarea";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <br />
+      <br />
+      <br />
+      <br />
+
+      <div className="container text-center">
+        <h1>Organizador de tareas</h1>
+      </div>
+      <br />
+      <br />
+      <br />
+      <div className="container">
+        <Tarea />
+        <Descripcion />
+        <Botones />
+        <TablaTarea />
+      </div>
+    </>
   );
 }
 
