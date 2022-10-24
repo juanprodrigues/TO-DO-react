@@ -236,8 +236,8 @@ const TODO = () => {
         className="text-center"
         style={{ position: "fixed", bottom: "0", left: "40%" }}
       >
-        {" "}
-        Repositorio git <a href="http://"></a>
+      
+         <a target="_blank" href="https://github.com/juanprodrigues/TO-DO-react"> Repositorio git</a>
       </h6>
     </div>
   );
