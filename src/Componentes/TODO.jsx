@@ -72,7 +72,7 @@ const reducer = (state, action) => {
       return state;
 
     case "RESTART":
-    //   state.listaTareas.length = 0;
+      //   state.listaTareas.length = 0;
       return initialState;
 
     default:
@@ -236,8 +236,10 @@ const TODO = () => {
         className="text-center"
         style={{ position: "fixed", bottom: "0", left: "40%" }}
       >
-      
-         <a target="_blank" href="https://github.com/juanprodrigues/TO-DO-react"> Repositorio git</a>
+        <a target="_blank" href="https://github.com/juanprodrigues/TO-DO-react">
+          {" "}
+          Repositorio git
+        </a>
       </h6>
     </div>
   );
