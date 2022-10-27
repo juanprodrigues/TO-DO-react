@@ -1,19 +1,27 @@
 import React, { useReducer, useState } from "react";
-import { Button, Table } from "react-bootstrap";
 import imagenX from "../imagenes/iconX.jpg";
+import Alerta from "./Alerta";
+import { Constantes } from "../../src/Componentes/Constantes";
+import Boton from "./Boton";
+import Tabla from "./Tabla";
+import Footer from "./Footer";
+import Input from "./Input";
+import Titulo from "./Titulo";
 
-const initialState = {
-  count: 0,
-  countInterval: 0,
-  increment: true,
-  tareaInput: "",
-  descripcionInput: "",
-  listaTareas: [],
-};
+function init(initialState) {
+  return {
+    count: 0,
+    countInterval: 0,
+    increment: true,
+    tareaInput: "",
+    descripcionInput: "",
+    listaTareas: [],
+  };
+}
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case "INCREMENT":
+    case "CHECK_TAREA":
       //buscar el se esta modificando y aplicarle los cambios
       const resultado = state.listaTareas.find((e) => e.id == action.id);
       resultado.terminado = action.increment;
@@ -27,12 +35,8 @@ const reducer = (state, action) => {
         ...state,
         increment: action.increment,
       };
-    case "SET_INTERVEL":
-      return {
-        ...state,
-        countInterval: parseInt(action.countInterval),
-      };
-    case "INCREASE_COUNT":
+
+    case "ADD_TAREA":
       //crear logica para poder añadir un objeto al la lista
       state.countInterval = state.countInterval + 1;
       let sumarTarea = {
@@ -47,13 +51,6 @@ const reducer = (state, action) => {
         ...state,
         listaTareas: state.listaTareas,
       };
-    //disparar un limpiador
-
-    case "DECREASE_COUNT":
-      return {
-        ...state,
-        count: state.count - state.countInterval,
-      };
 
     case "DELETE":
       // si el ultimo esta completado, se puede limilar uno que no esta completado antes de ese
@@ -66,14 +63,21 @@ const reducer = (state, action) => {
         };
 
         // state.listaTareas = state.listaTareas.filter(item => e.id != action.alt)
-      } else {
-        alert("La tareas no esta completada aunc");
       }
       return state;
 
     case "RESTART":
+      let bandera = false;
+      for (let index = 0; index < state.listaTareas.length; index++) {
+        if (!state.listaTareas[index].terminado) {
+          bandera = true;
+        }
+      }
+      if (bandera) {
+        return state;
+      }
       //   state.listaTareas.length = 0;
-      return initialState;
+      return init(action.payload);
 
     default:
       //Lanzar un error
@@ -81,44 +85,75 @@ const reducer = (state, action) => {
   }
 };
 // ----------------------------------------------------------------------
-const TODO = () => {
+const TODO = ({ initialState }) => {
+  const [error, setError] = useState("");
+  const [modalShow, setModalShow] = useState(false);
   const [title, setTitle] = useState("");
   const [descripcion, setdescripcion] = useState("");
 
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const handleCount = (e) => {
+  const [state, dispatch] = useReducer(reducer, initialState, init);
+  const handleAddTarea = (e) => {
     if (title && descripcion) {
       if (state.increment) {
         dispatch({
-          type: "INCREASE_COUNT",
+          type: "ADD_TAREA",
           tareaInput: title,
           descripcionInput: descripcion,
         });
-      } else {
-        dispatch({ type: "DECREASE_COUNT", descripcionInput: descripcion });
       }
       setTitle("");
       setdescripcion("");
     } else {
-      alert("Campos vacios");
+      setModalShow(true);
+
+      if (title === "" && descripcion === "") {
+        setError(Constantes.ERROR_CAMPOS_VACIOS);
+      } else if (descripcion === "") {
+        setError(Constantes.ERROR_CAMPO_VACIO_DESCRIPCION);
+      } else if (title === "") {
+        setError(Constantes.ERROR_CAMPO_VACIO_TAREA);
+      }
     }
   };
-  const handleRestar = (e) => {
-    dispatch({ type: "RESTART" });
+  const handleRestart = (e) => {
+    dispatch({ type: "RESTART", payload: initialState });
+    // const resultadoAlt = state.listaTareas.find((e) => e.id == alt);
+    if (state.listaTareas.length == 0) {
+      setModalShow(true);
+      setError(Constantes.ERROR_BORRAR_CONTENIDO);
+    } else {
+      let bandera = false;
+      // const resultadoAlt = state.listaTareas.find((e) => e.id == alt);
+      for (let index = 0; index < state.listaTareas.length; index++) {
+        if (!state.listaTareas[index].terminado) {
+          bandera = true;
+        }
+      }
+      if (bandera) {
+        setModalShow(true);
+        setError(Constantes.ERROR_BORRAR_CONTENIDO_SIN_COMPLETAR);
+      }
+    }
   };
-  const handleIncrement = (e) => {
+  const handleCheckTarea = (e) => {
     const { checked } = e.target;
     const { id } = e.target;
-    dispatch({ type: "INCREMENT", increment: checked, id });
+    dispatch({ type: "CHECK_TAREA", increment: checked, id });
   };
 
-  const handleImagen = (e) => {
+  const handleDeleteTarea = (e) => {
     const { alt } = e.target;
     dispatch({ type: "DELETE", alt });
+    //procesa y muestra un modal-No se pudo añadir en el reducer =(
+    const resultadoAlt = state.listaTareas.find((e) => e.id == alt);
+    if (!resultadoAlt.terminado) {
+      setModalShow(true);
+      setError(Constantes.ERROR_ANTES_ELIMINAR);
+    }
   };
 
   const estilosParaBotonEliminar = {
-    width: "20%",
+    // width: "20%",
     height: "20%",
     width: "4%",
     height: " 0%",
@@ -134,11 +169,11 @@ const TODO = () => {
   };
 
   let mostrar = state.listaTareas.map((item) => (
-    <tr>
+    <tr key={item.id}>
       <td>
         <input
           id={item.id}
-          onChange={handleIncrement}
+          onChange={handleCheckTarea}
           checked={item.terminado}
           type="checkbox"
         />
@@ -164,7 +199,7 @@ const TODO = () => {
       </td>
       <td style={item.terminado ? { color: "green" } : { color: "red" }}>
         {item.estado}
-        <button style={estilosParaBotonEliminar} onClick={handleImagen}>
+        <button style={estilosParaBotonEliminar} onClick={handleDeleteTarea}>
           <img alt={item.id} height={"100%"} width={"100%"} src={imagenX} />
         </button>
       </td>
@@ -172,75 +207,40 @@ const TODO = () => {
   ));
   return (
     <div>
-      <br />
-      <h1 className="text-center">TO DO</h1>
-      <br />
-      <br />
+      <Alerta
+        show={modalShow}
+        detalles={error}
+        onHide={() => setModalShow(false)}
+      />
+
+      <Titulo />
       <div className="container">
-        <div className="input-group mb-3">
-          <div className="input-group-prepend" style={{ width: "10%" }}>
-            <span className="input-group-text" id="basic-addon1">
-              Tarea
-            </span>
-          </div>
-          <input
-            style={{ width: "70%" }}
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            type="text"
-            placeholder="Ingrese de tarea"
-          />
-        </div>
-        <div className="input-group mb-3">
-          <div className="input-group-prepend" style={{ width: "10%" }}>
-            <span className="input-group-text" id="basic-addon1">
-              Descripcion
-            </span>
-          </div>
-          <input
-            style={{ width: "70%" }}
-            onChange={(event) => setdescripcion(event.target.value)}
-            value={descripcion}
-            type="text"
-            placeholder="Ingrese Descripcion"
-          />
-        </div>
-        <Button
-          onClick={handleCount}
-          style={{ width: "49%" }}
-          variant="success"
-        >
-          Agregar Tarea
-        </Button>
-        <Button
-          onClick={handleRestar}
-          style={{ width: "50%" }}
-          variant="danger"
-        >
-          Borrar contenido
-        </Button>{" "}
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>[X]</th>
-              <th>Id</th>
-              <th>Tarea</th>
-              <th>Descripcion</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>{mostrar}</tbody>
-        </Table>
+        <Input
+          nombre={"Tarea"}
+          title={title}
+          evento={(event) => setTitle(event.target.value)}
+          placeholder={"Ingrese una tarea a realizar"}
+        />
+        <Input
+          nombre={"Descripcion"}
+          title={descripcion}
+          evento={(event) => setdescripcion(event.target.value)}
+          placeholder={"Ingrese una Descripcion"}
+        />
+
+        <Boton
+          colorFondo={"success"}
+          nombre={"Agregar Tarea"}
+          handleAddTarea={handleAddTarea}
+        />
+        <Boton
+          colorFondo={"danger"}
+          nombre={"Borrar contenido"}
+          handleAddTarea={handleRestart}
+        />
+        <Tabla Tabla={mostrar} />
       </div>
-      <h6
-        className="text-center"
-        style={{ position: "fixed", bottom: "0", left: "40%" }}
-      >
-        <a target="_blank" href="https://github.com/juanprodrigues/TO-DO-react">
-          {" "}
-          Repositorio git
-        </a>
-      </h6>
+      <Footer />
     </div>
   );
 };
